@@ -1,0 +1,125 @@
+---
+title: "Assignment 4"
+format: html
+editor: visual
+---
+
+```{r}
+#| label: setup
+#| message: false
+library(tidyverse)
+library(readxl)
+library(restatapi)
+library(DescTools)
+library(ggrepel)
+library(flextable)
+library(modelr)
+library(plm)
+library(broom)
+library(sandwich)
+```
+
+## restatapi
+
+## Toc. eurostat
+
+Vi starter med å hente innholsfortegnelsen fra eurostat. Vi henter
+innholdsfortegnelsen i rent tekst format. Innholdsfortegnelsen gir vi
+navnet `toc_txt`.
+
+```{r}
+# xml skal ha mer detaljert info
+# toc_xml <- get_eurostat_toc()
+# tekstversjonen har trolig nok info for vårt formål
+toc_txt <- get_eurostat_toc(mode = "txt")
+```
+
+## GDP NUTS 3
+
+Vi søker i toc_txt etter tabeller med GDP på nivå NUTS 3 vha. funksjonen `str_detect()`. Denne funksjonen skiller mellom store og små bokstaver. Siden vi ikke vet hvilken skrivemåte som er brukt for gdp og NUTS 3 benytter vi regex for å matche både små og store bokstaver. Vi benytter `filter()` for å finne de tabellene vi ønsker. Vi benytter `select()` for å velge ut kolonnene `title` og `code` som vi ønsker å se på. Vi benytter `flextable()` for å vise tabellen. Vi benytter til slutt `autofit()` for å tilpasse tabellen til siden. Detaljer om regex finner dere i [Slides: Strings and regular expressions](https://msb105.netlify.app/wrangle-data/string-data/string-data#/title-slide) og i [r4ds ed. 1 chp. 14](https://r4ds.had.co.nz/strings.html).
+
+Vi ønsker å finne tabellbeskrivelser som *både* inneholder gdp *og* nuts 3. Trikset for enkelt å få dette til er å ha AND (&) *utenfor* `str_detect()`. Det går an å få til en AND inne i en regexp, men dette kan fort bli kronglete og komplisert.
+
+```{r}
+gdp_tabs <- toc_txt |> 
+# Regex AND external to regex
+   filter(
+     str_detect(
+       string = title,
+       # For å matche både små og store bokstaver
+       pattern = '[Gg][Dd][Pp]'
+       # AND vha. &
+       ) &
+     str_detect(
+       string = title,
+       # For å matche både små og store bokstaver og
+       # space eller ikke før 3
+       pattern = '[Nn][Uu][Tt][Ss]\\s*3'
+       )
+     ) |> 
+  select(title, code)
+```
+
+Vi finner fire tabeller listet i toc_txt.
+
+```{r}
+gdp_tabs |> 
+  select(title, code) |> 
+  flextable()  |> 
+  width(1, width = 3.5) |> 
+  width(2, width = 1.5)
+```
+
+Vi velger å benytte tabellen med kode `nama_10r_3gdp` som har forklarende tekst «Gross domestic product (GDP) at current market prices by NUTS 3 regions». Vi henter «Data Structure Definition» for å finne hva som finnes i dette datasettet. Informasjonen benyttes for å definer «filters» for spørringen mot eurostat.
+
+MERK! Merk bruken av nuts_level = \"3\" i filters for å få data på NUTS 3 nivå. Denne parameteren var ikke så lett å finne.
+
+Vi laster så ned «Data Structure Definition (DSD)» for tabellen med code `nama_10r_3gdp`.
+
+```{r}
+# description nama_10r_3gdp
+dsd_gdp <- get_eurostat_dsd("nama_10r_3gdp")
+```
+
+```{r}
+dsd_gdp |> 
+  head(n = 15) |> 
+  flextable()  |> 
+  width(1, width = 1) |> 
+  width(2, width = 1) |> 
+  width(3, width = 3.5)
+```
+
+Utfra kodene i `dsd_gdp`kan vi da formulere følgende spørring mot Eurostat:
+
+```{r}
+# Gross domestic product (GDP) at current market prices by NUTS 3 regions 
+# id: nama_10r_3gdp
+nama_10r_3gdp <- get_eurostat_data(
+  id = "nama_10r_3gdp",
+  filters = list(
+    geo = c("AT", "DE", "DK", "FR", "EL", "ES", 
+            "IT", "NL", "BE", "IE", "PL", "PT", "NO", "SE", "FI", "CH"),
+    nuts_level = "3",
+    unit = "MIO_PPS_EU27_2020"
+  ),
+  exact_match = FALSE,
+  date_filter = 2000:2020,
+  stringsAsFactors = FALSE
+  ) |> 
+  mutate(
+    gdp = 1000000 * values
+  ) |> 
+  select(-c(unit, values)) |> 
+  # Vil bare ha NUTS 3 nivå (5 karakterer). Vil aggregere selv til NUTS2,
+  # NUTS1 og NUTSc  
+  filter(str_length(geo) == 5)
+```
+
+Vi velger å benytte `MIO_PPS_EU27_2020` som mål på GNP. Dette er GNP i løpende priser (million Euro). Det kunne vært aktuelt å benytte `PPS_EU27_2020_HAB` som skal være GNP målt i konstant kjøpekraft. Det synes imidlertid som om `PPS_EU27_2020_HAB` har urimelige/åpenbart feil verdier for en del regioner.
+
+## Population demo_r_pjanaggr3
+
+## Oppgave
+
+Søk i `toc_txt` for tabeller med *population* og *NUTS 3*. Pass på at dere dekker både *population* og *Population* og ulike skrivemåter for *NUTS 3*.
