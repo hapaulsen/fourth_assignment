@@ -23,9 +23,7 @@ library(sandwich)
 
 ## Toc. eurostat
 
-Vi starter med å hente innholsfortegnelsen fra eurostat. Vi henter
-innholdsfortegnelsen i rent tekst format. Innholdsfortegnelsen gir vi
-navnet `toc_txt`.
+Vi starter med å hente innholsfortegnelsen fra eurostat. Vi henter innholdsfortegnelsen i rent tekst format. Innholdsfortegnelsen gir vi navnet `toc_txt`.
 
 ```{r}
 # xml skal ha mer detaljert info
@@ -72,7 +70,7 @@ gdp_tabs |>
 
 Vi velger å benytte tabellen med kode `nama_10r_3gdp` som har forklarende tekst «Gross domestic product (GDP) at current market prices by NUTS 3 regions». Vi henter «Data Structure Definition» for å finne hva som finnes i dette datasettet. Informasjonen benyttes for å definer «filters» for spørringen mot eurostat.
 
-MERK! Merk bruken av nuts_level = \"3\" i filters for å få data på NUTS 3 nivå. Denne parameteren var ikke så lett å finne.
+MERK! Merk bruken av nuts_level = "3" i filters for å få data på NUTS 3 nivå. Denne parameteren var ikke så lett å finne.
 
 Vi laster så ned «Data Structure Definition (DSD)» for tabellen med code `nama_10r_3gdp`.
 
@@ -120,6 +118,90 @@ Vi velger å benytte `MIO_PPS_EU27_2020` som mål på GNP. Dette er GNP i løpen
 
 ## Population demo_r_pjanaggr3
 
-## Oppgave
+### Oppgave 1
 
 Søk i `toc_txt` for tabeller med *population* og *NUTS 3*. Pass på at dere dekker både *population* og *Population* og ulike skrivemåter for *NUTS 3*.
+
+```{r}
+toc_txt |>
+   filter(
+     str_detect(
+       string = title,
+       # For å matche både små og store bokstaver
+       pattern = '[Gg][Dd][Pp]'
+       ) &
+     str_detect(
+       string = title,
+       # For å matche både små og store bokstaver og
+       # space eller ikke før 3
+       pattern = '[Nn][Uu][Tt][Ss]\\s*3'
+       )
+     ) |> 
+  str_view_all(toc_txt, "NUTS3") |>
+  select(title, code) |>
+  flextable() |>
+  width(1, width = 3.5) |>
+  width(2, width = 1.5)
+```
+
+### Oppgave 2
+
+i.  Finn koden for tabellen med forklarende tekst «Average annual population to calculate regional GDP data (thousand persons) by NUTS 3 regions».
+
+ii. Last ned Data Structure Definition (DSD) for denne tabellen.
+
+iii. Bruk opplysningene i DSD for å formulere en spørring mot Eurostat og last ned dataene. Gi dataene lastet ned samme navn som Eurostat sin kode for tabellen. Vi er bare interessert i totalbefolkning og ignorerer derfor både kjønn og alder. Vi ønsker data for årene 2000-2020.
+
+iv. Bruk `filter(str_length(geo) == 5)` for å begrense datasettet til NUTS3 regioner. Vi vil gjøre vår egen aggregering.
+
+v.  Hent data for landene:
+
+```{r}
+nama_10r_3popgdp <- get_eurostat_data(
+  id = "nama_10r_3popgdp",
+  filters = list(
+    geo = c("AT", "DE", "DK", "FR", "EL", "ES", "IT", "NL", "BE", "IE", "PL", "PT", "NO", "SE", "FI", "CH"),
+    nuts_level = "3",
+    unit = "MIO_PPS_EU27_2020"
+  ),
+  exact_match = FALSE,
+  date_filter = 2000:2020,
+  stringsAsFactors = FALSE
+  ) |> 
+  mutate(
+    gdp = 1000000 * values
+  ) |> 
+  select(-c(unit, values)) |> 
+  filter(str_length(geo) == 5)
+```
+
+### Oppgave 3
+
+3.  Hent ned befolningsdata fra tabellen som har teksten «Population on 1 January by broad age group, sex and NUTS 3 region». Gi også her dataene samme navn som tabell-koden hos Eurostat. Igjen vil vi ikke skille på kjønn eller alder.
+
+```{r}
+demo_r_pjanaggr3 <- get_eurostat_data(
+  id = "demo_r_pjanaggr3",
+  filters = list(
+    geo = c("AT", "DE", "DK", "FR", "EL", "ES", "IT", "NL", "BE", "IE", "PL", "PT", "NO", "SE", "FI", "CH"),
+    nuts_level = "3",
+    unit = "MIO_PPS_EU27_2020"
+  ),
+  exact_match = FALSE,
+  date_filter = 2000:2020,
+  stringsAsFactors = FALSE
+  ) |> 
+  mutate(
+    gdp = 1000000 * values
+  ) |> 
+  select(-c(unit, values)) |> 
+  filter(str_length(geo) == 5)
+```
+
+### Oppgave 4
+
+Bruk `setdiff()` for å finne NUTS3 soner som inngår i «Average annual population to calculate regional GDP data (thousand persons) by NUTS 3 regions», men ikke i «Population on 1 January by broad age group, sex and NUTS 3 region».
+
+```{r}
+
+```
