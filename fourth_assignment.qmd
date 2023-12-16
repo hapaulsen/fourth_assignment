@@ -120,6 +120,8 @@ Vi velger å benytte `MIO_PPS_EU27_2020` som mål på GNP. Dette er GNP i løpen
 
 ### Oppgave 1
 
+**Får ikke til denne koden, brukt det som står i tabellen i oppgavesamlingen i videre oppgaver**
+
 Søk i `toc_txt` for tabeller med *population* og *NUTS 3*. Pass på at dere dekker både *population* og *Population* og ulike skrivemåter for *NUTS 3*.
 
 ```{r}
@@ -177,7 +179,9 @@ nama_10r_3popgdp <- get_eurostat_data(
 
 ### Oppgave 3
 
-3.  Hent ned befolningsdata fra tabellen som har teksten «Population on 1 January by broad age group, sex and NUTS 3 region». Gi også her dataene samme navn som tabell-koden hos Eurostat. Igjen vil vi ikke skille på kjønn eller alder.
+**stått å jobbet i flere timer, uten noen fremgang. Feil i R eller feil i koden?**
+
+Hent ned befolningsdata fra tabellen som har teksten «Population on 1 January by broad age group, sex and NUTS 3 region». Gi også her dataene samme navn som tabell-koden hos Eurostat. Igjen vil vi ikke skille på kjønn eller alder.
 
 ```{r}
 demo_r_pjanaggr3 <- get_eurostat_data(
@@ -203,5 +207,43 @@ demo_r_pjanaggr3 <- get_eurostat_data(
 Bruk `setdiff()` for å finne NUTS3 soner som inngår i «Average annual population to calculate regional GDP data (thousand persons) by NUTS 3 regions», men ikke i «Population on 1 January by broad age group, sex and NUTS 3 region».
 
 ```{r}
+setdiff(nama_10r_3popgdp, demo_r_pjanaggr3)
+```
 
+### Oppgave 5
+
+Bruk `setdiff()` for å finne NUTS3 soner som inngår i «Population on 1 January by broad age group, sex and NUTS 3 region», men ikke i «Average annual population to calculate regional GDP data (thousand persons) by NUTS 3 regions».
+
+```{r}
+setdiff(demo_r_pjanaggr3, nama_10r_3popgdp)
+```
+
+### Oppgave 6
+
+Gjør en `full_join()` av de to populasjonstabellene. Gi resultatet navnet `full_pop_nuts3`.
+
+```{r}
+x <- nama_10r_3popgdp |>
+  full_join(demo_r_pjanaggr3,
+            by = join_by(geo, time))
+```
+
+### Oppgave 7
+
+**Bruk av rett GDPtabell?**
+
+Bruk setdiff() for å sjekke sonene i full_pop_nuts3 mot dem vi har i GDP tabellen.
+
+```{r}
+setdiff(full_pop_nuts3, nama_10r_3gdp)
+```
+
+### Oppgave 8
+
+**Bruk av rett GDPtabell?**
+
+Bruk setdiff() for å sjekke sonene i GDP tabellen mot dem vi har i full_pop_nuts3.
+
+```{r}
+setdiff(nama_10r_3gdp, full_pop_nuts3)
 ```
