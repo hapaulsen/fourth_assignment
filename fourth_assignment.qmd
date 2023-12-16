@@ -198,7 +198,7 @@ demo_r_pjanaggr3 <- get_eurostat_data(
   mutate(
     gdp = 1000000 * values
   ) |> 
-  select(-c(unit, values)) |> 
+  select(-c(unit, values, sex, age)) |> 
   filter(str_length(geo) == 5)
 ```
 
@@ -207,7 +207,7 @@ demo_r_pjanaggr3 <- get_eurostat_data(
 Bruk `setdiff()` for å finne NUTS3 soner som inngår i «Average annual population to calculate regional GDP data (thousand persons) by NUTS 3 regions», men ikke i «Population on 1 January by broad age group, sex and NUTS 3 region».
 
 ```{r}
-setdiff(nama_10r_3popgdp, demo_r_pjanaggr3)
+setdiff(nama_10r_3popgdp$geo, demo_r_pjanaggr3$geo)
 ```
 
 ### Oppgave 5
@@ -215,7 +215,7 @@ setdiff(nama_10r_3popgdp, demo_r_pjanaggr3)
 Bruk `setdiff()` for å finne NUTS3 soner som inngår i «Population on 1 January by broad age group, sex and NUTS 3 region», men ikke i «Average annual population to calculate regional GDP data (thousand persons) by NUTS 3 regions».
 
 ```{r}
-setdiff(demo_r_pjanaggr3, nama_10r_3popgdp)
+setdiff(demo_r_pjanaggr3$geo, nama_10r_3popgdp$geo)
 ```
 
 ### Oppgave 6
@@ -223,7 +223,7 @@ setdiff(demo_r_pjanaggr3, nama_10r_3popgdp)
 Gjør en `full_join()` av de to populasjonstabellene. Gi resultatet navnet `full_pop_nuts3`.
 
 ```{r}
-x <- nama_10r_3popgdp |>
+full_pop_nuts3 <- nama_10r_3popgdp |>
   full_join(demo_r_pjanaggr3,
             by = join_by(geo, time))
 ```
@@ -235,7 +235,7 @@ x <- nama_10r_3popgdp |>
 Bruk setdiff() for å sjekke sonene i full_pop_nuts3 mot dem vi har i GDP tabellen.
 
 ```{r}
-setdiff(full_pop_nuts3, nama_10r_3gdp)
+setdiff(full_pop_nuts3$geo, nama_10r_3gdp$geo)
 ```
 
 ### Oppgave 8
@@ -245,7 +245,7 @@ setdiff(full_pop_nuts3, nama_10r_3gdp)
 Bruk setdiff() for å sjekke sonene i GDP tabellen mot dem vi har i full_pop_nuts3.
 
 ```{r}
-setdiff(nama_10r_3gdp, full_pop_nuts3)
+setdiff(nama_10r_3gdp$geo, full_pop_nuts3$geo)
 ```
 
 ### Oppgave 9
@@ -254,7 +254,7 @@ Fjern \*\*ZZZ sonene fra `nama_10r_3gdp`.
 
 ```{r}
 y <- nama_10r_3gdp |>
-  select(-"**ZZZ")
+  filter(-"$ZZZ")
 ```
 
 ### Oppgave 10
@@ -271,4 +271,13 @@ full_pop_nuts3 <- full_pop_nuts3 |>
       )
   ) |> 
   select(-pop.x, -pop.y)
+```
+
+### Oppgave 11
+
+Undersøk om vi har noen NUTS 3 soner med pop lik 0. Hvis det er noen så rekod disse til NA
+
+```{r}
+full_pop_nuts3 |>
+  colSums(full_pop_nuts3 == 0)
 ```
