@@ -247,3 +247,28 @@ Bruk setdiff() for å sjekke sonene i GDP tabellen mot dem vi har i full_pop_nut
 ```{r}
 setdiff(nama_10r_3gdp, full_pop_nuts3)
 ```
+
+### Oppgave 9
+
+Fjern \*\*ZZZ sonene fra `nama_10r_3gdp`.
+
+```{r}
+y <- nama_10r_3gdp |>
+  select(-"**ZZZ")
+```
+
+### Oppgave 10
+
+Lag en ny variabel pop i full_pop_nuts3 ut fra diskusjonen ovenfor. Dropp deretter variablene pop.x og pop.y.
+
+```{r}
+full_pop_nuts3 <- full_pop_nuts3 |> 
+  mutate(
+    pop = ifelse(
+      test = is.na(pop.x) == TRUE, 
+      yes = pop.y, 
+      no = pop.x
+      )
+  ) |> 
+  select(-pop.x, -pop.y)
+```
