@@ -254,7 +254,7 @@ Fjern \*\*ZZZ sonene fra `nama_10r_3gdp`.
 
 ```{r}
 y <- nama_10r_3gdp |>
-  filter(-"$ZZZ")
+  filter(geo, -"$ZZZ")
 ```
 
 ### Oppgave 10
@@ -281,3 +281,56 @@ Undersøk om vi har noen NUTS 3 soner med pop lik 0. Hvis det er noen så rekod 
 full_pop_nuts3 |>
   colSums(full_pop_nuts3 == 0)
 ```
+
+### Oppgave 12
+
+Utfør en left_join() der populasjonsdata blir lagt til datasettet som innholder GDP-data. Gi resultatet navnet `eu_data`.
+
+```{r}
+eu_data <- nama_10r_3gdp |>
+  left_join(full_pop_nuts3,
+            by = join_by(geo, time))
+```
+
+```{r}
+dim(eu_data)
+```
+
+```{r}
+# lager en ny variabel
+eu_data <- eu_data |> 
+  mutate(
+    country = str_sub(geo, start = 1L, end = 2L)
+  )
+```
+
+```{r}
+#sjekker ut antall NUTS 3
+eu_data |> 
+  distinct(geo, .keep_all = TRUE) |> 
+  group_by(country) |> 
+  summarise(Antall = n(), .groups = "drop")
+```
+
+```{r}
+#sjekker ut summary for variablene 
+eu_data |> 
+  summary()
+```
+
+```{r}
+#endrer navn og rekkefølge på variablene
+eu_data <- eu_data |> 
+  select(country, NUTS3 = geo, year = time, gdp, pop)
+```
+
+```{r}
+# Rydder opp
+# Sletter alle objekt utenom eu_data
+# don't use if you don't mean it
+rm(list = setdiff(ls(), "eu_data"))
+```
+
+### Oppgave 13
+
+Beregn `gdp_per_capita` for hver NUTS3 region for årene 2000-2020. Avrund til 2 desimaler.
