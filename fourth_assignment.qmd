@@ -125,6 +125,28 @@ Vi velger å benytte `MIO_PPS_EU27_2020` som mål på GNP. Dette er GNP i løpen
 Søk i `toc_txt` for tabeller med *population* og *NUTS 3*. Pass på at dere dekker både *population* og *Population* og ulike skrivemåter for *NUTS 3*.
 
 ```{r}
+toc_txt_tabeller <- toc_txt |> 
+# Regex AND external to regex
+   filter(
+     str_detect(
+       string = title,
+       # For å matche både små og store bokstaver
+       pattern = '[Po][Oo][Pp][Uu][Ll][Aa][Tt][Ii][Oo][Nn]'
+       # AND vha. &
+       ) &
+     str_detect(
+       string = title,
+       # For å matche både små og store bokstaver og
+       # space eller ikke før 3
+       pattern = '[Nn][Uu][Tt][Ss]\\s*3'
+       )
+     ) |> 
+  select(title, code)
+```
+
+!Har ikke kjørt denne chunken under! Chunken over fungerer bra?
+
+```{r}
 toc_txt |>
    filter(
      str_detect(
@@ -151,6 +173,8 @@ toc_txt |>
 i.  Finn koden for tabellen med forklarende tekst «Average annual population to calculate regional GDP data (thousand persons) by NUTS 3 regions».
 
 ii. Last ned Data Structure Definition (DSD) for denne tabellen.
+
+    i.  ***Skal vi ikke bruke dsd_gpd som vist på denne?***
 
 iii. Bruk opplysningene i DSD for å formulere en spørring mot Eurostat og last ned dataene. Gi dataene lastet ned samme navn som Eurostat sin kode for tabellen. Vi er bare interessert i totalbefolkning og ignorerer derfor både kjønn og alder. Vi ønsker data for årene 2000-2020.
 
@@ -181,7 +205,7 @@ nama_10r_3popgdp <- get_eurostat_data(
 
 **stått å jobbet i flere timer, uten noen fremgang. Feil i R eller feil i koden?**
 
-Hent ned befolningsdata fra tabellen som har teksten «Population on 1 January by broad age group, sex and NUTS 3 region». Gi også her dataene samme navn som tabell-koden hos Eurostat. Igjen vil vi ikke skille på kjønn eller alder.
+Hent ned befolkningsdata fra tabellen som har teksten «Population on 1 January by broad age group, sex and NUTS 3 region». Gi også her dataene samme navn som tabell-koden hos Eurostat. Igjen vil vi ikke skille på kjønn eller alder.
 
 ```{r}
 demo_r_pjanaggr3 <- get_eurostat_data(
@@ -224,7 +248,8 @@ Gjør en `full_join()` av de to populasjonstabellene. Gi resultatet navnet `full
 
 ```{r}
 full_pop_nuts3 <- nama_10r_3popgdp |>
-  full_join(demo_r_pjanaggr3,
+  full_join(demo_r_pjanaggr3, nama_10r_3popgdp,
+            #har lagt til nama_10r_3popgdp, den manglet vel?
             by = join_by(geo, time))
 ```
 
@@ -334,3 +359,11 @@ rm(list = setdiff(ls(), "eu_data"))
 ### Oppgave 13
 
 Beregn `gdp_per_capita` for hver NUTS3 region for årene 2000-2020. Avrund til 2 desimaler.
+
+Sjekker summary gdp_per_capita.
+
+```{r}
+eu_data |>
+  select(gdp_per_capita) |> 
+  summary()
+```
