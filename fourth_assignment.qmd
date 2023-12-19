@@ -120,8 +120,6 @@ Vi velger å benytte `MIO_PPS_EU27_2020` som mål på GNP. Dette er GNP i løpen
 
 ### Oppgave 1
 
-**Får ikke til denne koden, brukt det som står i tabellen i oppgavesamlingen i videre oppgaver**
-
 Søk i `toc_txt` for tabeller med *population* og *NUTS 3*. Pass på at dere dekker både *population* og *Population* og ulike skrivemåter for *NUTS 3*.
 
 ```{r}
@@ -144,37 +142,11 @@ toc_txt_tabeller <- toc_txt |>
   select(title, code)
 ```
 
-!Har ikke kjørt denne chunken under! Chunken over fungerer bra?
-
-```{r}
-toc_txt |>
-   filter(
-     str_detect(
-       string = title,
-       # For å matche både små og store bokstaver
-       pattern = '[Gg][Dd][Pp]'
-       ) &
-     str_detect(
-       string = title,
-       # For å matche både små og store bokstaver og
-       # space eller ikke før 3
-       pattern = '[Nn][Uu][Tt][Ss]\\s*3'
-       )
-     ) |> 
-  #str_view_all(toc_txt, "NUTS3") |>
-  select(title, code) |>
-  flextable() |>
-  width(1, width = 3.5) |>
-  width(2, width = 1.5)
-```
-
 ### Oppgave 2
 
 i.  Finn koden for tabellen med forklarende tekst «Average annual population to calculate regional GDP data (thousand persons) by NUTS 3 regions».
 
 ii. Last ned Data Structure Definition (DSD) for denne tabellen.
-
-    i.  ***Skal vi ikke bruke dsd_gpd som vist på denne?***
 
 iii. Bruk opplysningene i DSD for å formulere en spørring mot Eurostat og last ned dataene. Gi dataene lastet ned samme navn som Eurostat sin kode for tabellen. Vi er bare interessert i totalbefolkning og ignorerer derfor både kjønn og alder. Vi ønsker data for årene 2000-2020.
 
@@ -183,7 +155,7 @@ iv. Bruk `filter(str_length(geo) == 5)` for å begrense datasettet til NUTS3 reg
 v.  Hent data for landene:
 
 ```{r}
-dsd_gdp <- get_eurostat_dsd("nama_10r_3popgdp")
+dsd_popgdp <- get_eurostat_dsd("nama_10r_3popgdp")
 ```
 
 ```{r}
@@ -192,25 +164,23 @@ nama_10r_3popgdp <- get_eurostat_data(
   filters = list(
     geo = c("AT", "DE", "DK", "FR", "EL", "ES", "IT", "NL", "BE", "IE", "PL", "PT", "NO", "SE", "FI", "CH"),
     nuts_level = "3",
-    unit = "MIO_PPS_EU27_2020"
+    unit = "THS"
   ),
   exact_match = FALSE,
   date_filter = 2000:2020,
   stringsAsFactors = FALSE
   ) |> 
-  mutate(
-    gdp = 1000000 * values
-  ) |> 
-  select(-c(unit, values)) |> 
+  mutate(annualpop = 1000 * values) |>
   filter(str_length(geo) == 5)
-
 ```
 
 ### Oppgave 3
 
-**stått å jobbet i flere timer, uten noen fremgang. Feil i R eller feil i koden?**
-
 Hent ned befolkningsdata fra tabellen som har teksten «Population on 1 January by broad age group, sex and NUTS 3 region». Gi også her dataene samme navn som tabell-koden hos Eurostat. Igjen vil vi ikke skille på kjønn eller alder.
+
+```{r}
+dsd_pjanaggr3 <- get_eurostat_dsd("demo_r_pjanaggr3")
+```
 
 ```{r}
 demo_r_pjanaggr3 <- get_eurostat_data(
@@ -250,15 +220,15 @@ setdiff(demo_r_pjanaggr3$geo, nama_10r_3popgdp$geo)
 Gjør en `full_join()` av de to populasjonstabellene. Gi resultatet navnet `full_pop_nuts3`.
 
 ```{r}
-full_pop_nuts3 <- nama_10r_3popgdp |>
-  full_join(demo_r_pjanaggr3, nama_10r_3popgdp,
-            #har lagt til nama_10r_3popgdp, den manglet vel?
-            by = join_by(geo, time))
+full_pop_nuts3 <- demo_r_pjanaggr3 |>
+  full_join(nama_10r_3popgdp,
+            by = join_by(geo, time)) |>
+              select(-c(unit.x, unit.y, sex, age)) |>
+  rename("pop.x" = values.x, "pop.y" = values.y)
+            
 ```
 
 ### Oppgave 7
-
-**Bruk av rett GDPtabell?**
 
 Bruk setdiff() for å sjekke sonene i full_pop_nuts3 mot dem vi har i GDP tabellen.
 
@@ -267,8 +237,6 @@ setdiff(full_pop_nuts3$geo, nama_10r_3gdp$geo)
 ```
 
 ### Oppgave 8
-
-**Bruk av rett GDPtabell?**
 
 Bruk setdiff() for å sjekke sonene i GDP tabellen mot dem vi har i full_pop_nuts3.
 
@@ -281,8 +249,15 @@ setdiff(nama_10r_3gdp$geo, full_pop_nuts3$geo)
 Fjern \*\*ZZZ sonene fra `nama_10r_3gdp`.
 
 ```{r}
-y <- nama_10r_3gdp |>
-  filter(geo, -"$ZZZ")
+nama_10r_3gdp <- nama_10r_3gdp |>
+  subset(!grepl('_ZZZ$', geo))
+```
+
+```{r}
+full_pop_nuts3 |> 
+  filter(geo %in% c("NO053", "NO060", "NO061")) |> 
+  filter(time %in% 2014:2020) |> 
+  arrange(time, geo)
 ```
 
 ### Oppgave 10
@@ -306,8 +281,20 @@ full_pop_nuts3 <- full_pop_nuts3 |>
 Undersøk om vi har noen NUTS 3 soner med pop lik 0. Hvis det er noen så rekod disse til NA
 
 ```{r}
-full_pop_nuts3 |>
-  colSums(full_pop_nuts3 == 0)
+colSums(full_pop_nuts3 == 0)
+```
+
+Her fant vi at det er 117 hvor antallet er 0
+
+```{r}
+full_pop_nuts3 <- full_pop_nuts3 |>
+  mutate_at(c('pop'), ~na_if(., 0))
+```
+
+Her har vi endret alle 0 verdiene i kollonne pop til NA verdi, så kontrollerer vi at vi ikke har flere 0 verdier
+
+```{r}
+colSums(full_pop_nuts3 == 0)
 ```
 
 ### Oppgave 12
