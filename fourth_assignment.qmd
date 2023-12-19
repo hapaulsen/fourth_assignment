@@ -400,6 +400,6 @@ Lag de tre variablene NUTS2, NUTS1 og NUTSc fra NUTS3. Dette gjøres enklest vha
 ```{r}
 x <- eu_data |>
   mutate(
-    
+    "NUTS1"
   )
 ```
