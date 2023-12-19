@@ -161,7 +161,7 @@ toc_txt |>
        pattern = '[Nn][Uu][Tt][Ss]\\s*3'
        )
      ) |> 
-  str_view_all(toc_txt, "NUTS3") |>
+  #str_view_all(toc_txt, "NUTS3") |>
   select(title, code) |>
   flextable() |>
   width(1, width = 3.5) |>
@@ -199,6 +199,7 @@ nama_10r_3popgdp <- get_eurostat_data(
   ) |> 
   select(-c(unit, values)) |> 
   filter(str_length(geo) == 5)
+
 ```
 
 ### Oppgave 3
@@ -213,16 +214,14 @@ demo_r_pjanaggr3 <- get_eurostat_data(
   filters = list(
     geo = c("AT", "DE", "DK", "FR", "EL", "ES", "IT", "NL", "BE", "IE", "PL", "PT", "NO", "SE", "FI", "CH"),
     nuts_level = "3",
-    unit = "MIO_PPS_EU27_2020"
+    unit = "NR",
+    sex = "T",
+    age = "TOTAL"
   ),
   exact_match = FALSE,
   date_filter = 2000:2020,
   stringsAsFactors = FALSE
   ) |> 
-  mutate(
-    gdp = 1000000 * values
-  ) |> 
-  select(-c(unit, values, sex, age)) |> 
   filter(str_length(geo) == 5)
 ```
 
