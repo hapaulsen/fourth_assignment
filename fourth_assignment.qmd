@@ -183,6 +183,10 @@ iv. Bruk `filter(str_length(geo) == 5)` for å begrense datasettet til NUTS3 reg
 v.  Hent data for landene:
 
 ```{r}
+dsd_gdp <- get_eurostat_dsd("nama_10r_3popgdp")
+```
+
+```{r}
 nama_10r_3popgdp <- get_eurostat_data(
   id = "nama_10r_3popgdp",
   filters = list(
