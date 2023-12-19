@@ -171,6 +171,7 @@ nama_10r_3popgdp <- get_eurostat_data(
   stringsAsFactors = FALSE
   ) |> 
   mutate(annualpop = 1000 * values) |>
+  select(-"values") |>
   filter(str_length(geo) == 5)
 ```
 
@@ -224,7 +225,7 @@ full_pop_nuts3 <- demo_r_pjanaggr3 |>
   full_join(nama_10r_3popgdp,
             by = join_by(geo, time)) |>
               select(-c(unit.x, unit.y, sex, age)) |>
-  rename("pop.x" = values.x, "pop.y" = values.y)
+  rename("pop.x" = values, "pop.y" = annualpop)
             
 ```
 
@@ -311,6 +312,8 @@ eu_data <- nama_10r_3gdp |>
 dim(eu_data)
 ```
 
+***Her ser vi at vi ikke har likt som i oppgavesettet, men vi finner ikke hvor feilen ligger. Avviket er 123. Vi ser også i oppgave 12 at disse tallene kommer opp som NA verdier.***
+
 ```{r}
 # lager en ny variabel
 eu_data <- eu_data |> 
@@ -350,10 +353,53 @@ rm(list = setdiff(ls(), "eu_data"))
 
 Beregn `gdp_per_capita` for hver NUTS3 region for årene 2000-2020. Avrund til 2 desimaler.
 
+```{r}
+eu_data <- eu_data |>
+  mutate(gdp_per_capita = gdp / pop)
+```
+
 Sjekker summary gdp_per_capita.
 
 ```{r}
 eu_data |>
   select(gdp_per_capita) |> 
   summary()
+```
+
+### Oppgave 14
+
+Bruk case_when() for å legge til variabelen `country_name` før vi går videre. Østerrike for AT, Belgia for BE etc..
+
+```{r}
+eu_data <- eu_data |>
+  mutate(
+    "country_name" = case_when(
+      country %in% c("AT") ~ "Østerrike",
+      country %in% c("DE") ~ "Tyskland",
+      country %in% c("DK") ~ "Danmark",
+      country %in% c("FR") ~ "Frankrike",
+      country %in% c("EL") ~ "Hellas",
+      country %in% c("ES") ~ "Spania",
+      country %in% c("IT") ~ "Italia",
+      country %in% c("NL") ~ "Nederland",
+      country %in% c("BE") ~ "Belgia",
+      country %in% c("IE") ~ "Irland",
+      country %in% c("PL") ~ "Polen",
+      country %in% c("PT") ~ "Portugal",
+      country %in% c("NO") ~ "Norge",
+      country %in% c("SE") ~ "Sverige",
+      country %in% c("FI") ~ "Finland",
+      country %in% c("CH") ~ "Sveits")
+  )
+```
+
+### Oppgave 15
+
+Lag de tre variablene NUTS2, NUTS1 og NUTSc fra NUTS3. Dette gjøres enklest vha. mutate() og str_sub(). Bruker også select() for å få variablene i rekkefølgen: country_name, country, year, NUTS3, NUTS2, NUTS1, NUTSc, gdp, pop, gdp_per_capita . NUTSc er vår egen «oppfinnelse» og angir land (to første karakterer i NUTS kode).
+
+```{r}
+x <- eu_data |>
+  mutate(
+    
+  )
 ```
