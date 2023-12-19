@@ -398,8 +398,154 @@ eu_data <- eu_data |>
 Lag de tre variablene NUTS2, NUTS1 og NUTSc fra NUTS3. Dette gjøres enklest vha. mutate() og str_sub(). Bruker også select() for å få variablene i rekkefølgen: country_name, country, year, NUTS3, NUTS2, NUTS1, NUTSc, gdp, pop, gdp_per_capita . NUTSc er vår egen «oppfinnelse» og angir land (to første karakterer i NUTS kode).
 
 ```{r}
-x <- eu_data |>
+eu_data <- eu_data |>
   mutate(
-    "NUTS1"
-  )
+    NUTS2 = str_sub(NUTS3, start = 1, end = 4),
+    NUTS1 = str_sub(NUTS3, start = 1, end = 3),
+    NUTSc = str_sub(NUTS3, start = 1, end = 2)) |> 
+  select(country_name, country, year, NUTS3, NUTS2, NUTS1, NUTSc, gdp, pop, gdp_per_capita)
+```
+
+### Oppgave 16
+
+Bruk koden nedenfor til å beregne Gini-koeffisienter på NUTS2 nivå. Beregn også `populasjonen` og `gdp` på NUTS2 nivå. Bruk de to siste for å regne ut `gdp_per_capita` for hvert NUTS2 område. Finn også antall NUTS3 regioner som finnes i hver NUTS2 region. Gi denne variabelen navnet `num_nuts3`.
+Det er viktig at dere beregner Gini-koeffisient før dere aggregerer
+populasjon og GDP. Resultatet legger dere i en tibble kalt `gini_NUTS2`.
+
+```{r}
+gini_NUTS2 <- eu_data |> 
+  group_by(NUTS2, country_name, country, year) |> 
+  summarise(
+    gini_nuts2 = Gini(
+      x = gdp_per_capita,
+      weights = pop,
+      na.rm = TRUE
+    ),
+    pop = sum(pop, na.rm = TRUE),
+    gdp = sum(gdp, na.rm = TRUE),
+    gdp_per_capita = gdp / pop,
+    num_nuts3 = n(),
+    .groups = "drop"
+    ) |> 
+  select(country_name, country, NUTS2, year, pop, gdp, 
+         gdp_per_capita, num_nuts3, gini_nuts2)
+```
+
+```{r}
+gini_NUTS2 |> 
+  summary() |> 
+  print(width = 80)
+```
+
+Vi ser at vi har et spenn i Gini-koeffisienten på NUTS2 nivå fra 0.00 til 0.45. Vi har også 800 NAs som stammer fra de 110 NA-ene vi har i `pop`. Vi ser også at antall NUTS3 i NUTS2 regioner spenner fra 1 til 23.
+
+Sjekker obs. med Gini avrundet til 0,0000.
+
+```{r}
+gini_NUTS2 |> 
+  select(-country_name) |> 
+  filter(gini_nuts2 < 0.001)
+```
+
+### Oppgave 17
+
+```{r}
+gini_NUTS1 <- eu_data |> 
+  group_by(NUTS1, country_name, country, year) |> 
+  summarise(
+    gini_nuts1 = Gini(
+      x = gdp_per_capita,
+      weights = pop,
+      na.rm = TRUE
+    ),
+    pop = sum(pop, na.rm = TRUE),
+    gdp = sum(gdp, na.rm = TRUE),
+    gdp_per_capita = gdp / pop,
+    num_nuts3 = n(),
+    .groups = "drop"
+    ) |> 
+  select(country_name, country, NUTS1, year, pop, gdp, 
+         gdp_per_capita, num_nuts3, gini_nuts1)
+```
+
+```{r}
+gini_NUTS1 |> 
+  summary() |> 
+  print(width = 80)
+```
+
+### Oppgave 18
+
+```{r}
+gini_NUTSc <- eu_data |> 
+  group_by(NUTSc, country_name, country, year) |> 
+  summarise(
+    gini_nutsc = Gini(
+      x = gdp_per_capita,
+      weights = pop,
+      na.rm = TRUE
+    ),
+    pop = sum(pop, na.rm = TRUE),
+    gdp = sum(gdp, na.rm = TRUE),
+    gdp_per_capita = gdp / pop,
+    num_nuts3 = n(),
+    .groups = "drop"
+    ) |> 
+  select(country_name, country, NUTSc, year, pop, gdp, 
+         gdp_per_capita, num_nuts3, gini_nutsc)
+```
+
+```{r}
+gini_NUTSc |> 
+  summary() |> 
+  print(width = 80)
+```
+
+### Oppgave 19
+
+```{r}
+gini_NUTS2_nest <- gini_NUTS2 |> 
+  group_by(country_name, country) |> 
+  nest(.key = "NUTS2_data") |> 
+  ungroup()
+```
+
+### Oppgave 20
+
+```{r}
+gini_NUTS1_nest <- gini_NUTS1 |> 
+  group_by(country_name, country) |> 
+  nest(.key = "NUTS1_data") |> 
+  ungroup()
+```
+
+### Oppgave 21
+
+```{r}
+gini_NUTSc_nest <- gini_NUTSc |> 
+  group_by(country_name, country) |> 
+  nest(.key = "NUTSc_data") |> 
+  ungroup()
+```
+
+### Oppgave 22
+
+```{r}
+NUTS3_nest <- eu_data |> 
+  group_by(country_name, country) |> 
+  nest(.key = "NUTS3_data") |> 
+  ungroup()
+```
+
+```{r}
+eu_data_nested <- eu_data |> 
+  left_join(gini_NUTS2_nest,
+            by = join_by(country_name, country)) |> 
+  left_join(gini_NUTS1_nest,
+            by = join_by(country_name, country)) |> 
+  left_join(gini_NUTSc_nest,
+            by = join_by(country_name, country)) |> 
+    left_join(NUTS3_nest,
+            by = join_by(country_name, country)) |> 
+  select(country_name, country, NUTS3_data, NUTS2_data, NUTS1_data, NUTSc_data)
 ```
