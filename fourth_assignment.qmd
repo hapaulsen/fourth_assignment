@@ -355,7 +355,13 @@ Beregn `gdp_per_capita` for hver NUTS3 region for årene 2000-2020. Avrund til 2
 
 ```{r}
 eu_data <- eu_data |>
-  mutate(gdp_per_capita = gdp / pop)
+    mutate(gdp_per_capita = gdp / pop)
+```
+
+Avrunder til to desimaler.
+
+```{r}
+round(eu_data$gdp_per_capita, digits = 2)
 ```
 
 Sjekker summary gdp_per_capita.
@@ -536,14 +542,58 @@ NUTS3_nest <- eu_data |>
 ```
 
 ```{r}
-eu_data_nested <- eu_data |> 
-  left_join(gini_NUTS2_nest,
-            by = join_by(country_name, country)) |> 
+eu_data_nested <- gini_NUTS2_nest |> 
   left_join(gini_NUTS1_nest,
             by = join_by(country_name, country)) |> 
   left_join(gini_NUTSc_nest,
             by = join_by(country_name, country)) |> 
-    left_join(NUTS3_nest,
+  left_join(NUTS3_nest,
             by = join_by(country_name, country)) |> 
   select(country_name, country, NUTS3_data, NUTS2_data, NUTS1_data, NUTSc_data)
 ```
+
+```{r}
+# don't run if you don't mean it.
+rm(list = setdiff(ls(), c("eu_data", "eu_data_nested")))
+```
+
+### Oppgave 23
+
+Lag et lineplot i ggplot som viser utviklingen i Gini-koeffisient på nasjonsnivå for de 16
+
+landene vi har med. Husk argumentet group =.
+
+```{r}
+eu_data_nested |>
+  unnest(NUTSc_data) |>
+  ggplot(aes(x = year, y = gini_nutsc, color = country)) + 
+  geom_line(aes(group = country)) +
+  geom_smooth(se = FALSE) +
+  geom_hline(yintercept = 0)
+```
+
+```{r}
+eu_data_nested |> 
+  unnest(NUTSc_data) |> 
+  filter(year == 2020) |> 
+  select(country_name, gini_nutsc) |> 
+  arrange(desc(gini_nutsc)) |> 
+  flextable() |> 
+  width(1, width = 1.5) |> 
+  width(2, width = 1.5)
+```
+
+### Oppgave 24
+
+```{r}
+eu_data_nested |> 
+  unnest(NUTS2_data) |> 
+  filter(str_detect(NUTS2, 'IE')) |> 
+  select(country_name, year, NUTS2, gini_nuts2) |> 
+  arrange(desc(year)) |> 
+  flextable() |> 
+  width(1, width = 1.5) |> 
+  width(2, width = 1.5)
+```
+
+### Oppgave 25
