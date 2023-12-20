@@ -597,3 +597,167 @@ eu_data_nested |>
 ```
 
 ### Oppgave 25
+
+Lag et line-plot som viser utviklingen i Gini-koeffisientene for NUTS2 regionene i Spania.
+
+```{r}
+eu_data_nested |>
+  unnest(NUTS2_data) |>
+  filter(str_detect(NUTS2, 'ES')) |>
+  ggplot(aes(x = year, y = gini_nuts2, color = NUTS2)) + 
+  geom_line(aes(group = NUTS2)) +
+  geom_smooth(mapping = aes(x = year, y = gini_nuts2)) +
+  geom_hline(yintercept = 0)
+```
+
+### Oppgave 26
+
+```{r}
+eu_data_nested |>
+  unnest(NUTS1_data) |>
+  filter(str_detect(NUTS1, 'ES')) |> 
+  ggplot(aes(x = year, y = gini_nuts1, color = NUTS1)) + 
+  geom_line(aes(group = NUTS1)) +
+  geom_smooth() +
+  geom_hline(yintercept = 0)
+```
+
+### Oppgave 27
+
+*Det er større fordeling av verdiskapning i NUTS1-regionene enn NUTS2.*
+
+### Oppgave 28
+
+```{r}
+eu_data_nested |>
+  unnest(NUTS2_data) |>
+  filter(str_detect(NUTS2, 'ES')) |> 
+  ggplot(aes(x = year, y = gdp_per_capita, color = NUTS2)) + 
+  geom_line(aes(group = NUTS2)) +
+  geom_smooth() +
+  geom_hline(yintercept = 0) +
+  theme_minimal()
+
+```
+
+Vi ser at korona kom i 2020 som medførte at GDP falt betraktelig dette året.
+
+#### Oppgave 29
+
+Lag et line-plot som viser utviklingen i Gini-koeffisient for NUTS2 regionene i Tyskland.
+
+```{r}
+eu_data_nested |>
+  unnest(NUTS2_data) |>
+  filter(str_detect(NUTS2, 'DE')) |>
+  ggplot(aes(x = year, y = gini_nuts2, color = NUTS2)) + 
+  geom_line(aes(group = NUTS2)) +
+  geom_smooth(mapping = aes(x = year, y = gini_nuts2)) +
+  geom_hline(yintercept = 0)
+```
+
+### Oppgave 30
+
+```{r}
+eu_data_nested |>
+  unnest(NUTS1_data) |>
+  filter(str_detect(NUTS1, 'DE')) |>
+  ggplot(aes(x = year, y = gini_nuts1, color = NUTS1)) + 
+  geom_line(aes(group = NUTS1)) +
+  geom_smooth(mapping = aes(x = year, y = gini_nuts1)) +
+  geom_hline(yintercept = 0)
+```
+
+Ikke like mye spredning i NUTS1-regionene.
+
+### Oppgave 31
+
+```{r}
+eu_data_nested |>
+  unnest(NUTS2_data) |>
+  filter(str_detect(NUTS2, 'FR')) |>
+  ggplot(aes(x = year, y = gini_nuts2, color = NUTS2)) + 
+  geom_line(aes(group = NUTS2)) +
+  geom_smooth(mapping = aes(x = year, y = gini_nuts2)) +
+  geom_hline(yintercept = 0)
+```
+
+```{r}
+eu_data_nested |> 
+  unnest(NUTS2_data) |> 
+  filter(country_name == "Frankrike") |> 
+  filter(year == 2020) |> 
+  select(NUTS2, gini_nuts2) |> 
+  arrange(desc(gini_nuts2)) |> 
+  flextable()  |> 
+  width(1, width = 1.5) |> 
+  width(2, width = 1.5)
+```
+
+### Oppgave 32
+
+```{r}
+eu_data_nested |>
+  unnest(NUTS1_data) |>
+  filter(str_detect(NUTS1, 'FR')) |>
+  ggplot(aes(x = year, y = gini_nuts1, color = NUTS1)) + 
+  geom_line(aes(group = NUTS1)) +
+  geom_smooth(mapping = aes(x = year, y = gini_nuts1)) +
+  geom_hline(yintercept = 0)
+```
+
+### Oppgave 33
+
+Vi ser at for Frankrike er det en region (FR1) som har klart større forskjeller mht. verdistgning enn de andre. Sjekk denne regionen nærmere.
+
+```{r}
+eu_data_nested |>
+  unnest(NUTS3_data) |>
+  filter(str_detect(NUTS1, 'FR1')) |> 
+  ggplot(aes(x = year, y = gini_, color = NUTS3)) + 
+  geom_line(aes(group = NUTS3)) +
+  geom_smooth() +
+  geom_hline(yintercept = 0) +
+  theme_minimal()
+```
+
+### Oppgave 34
+
+Vis utviklingen i `gdp_per_capita` for NUTS3 sonene i FR1.
+
+```{r}
+eu_data_nested |>
+  unnest(NUTS3_data) |>
+  filter(str_detect(NUTS1, 'FR1')) |> 
+  ggplot(aes(x = year, y = gdp_per_capita, color = NUTS3)) + 
+  geom_line(aes(group = NUTS3)) +
+  geom_smooth() +
+  geom_hline(yintercept = 0) +
+  theme_minimal()
+```
+
+### Oppgave 35
+
+Hva ser ut til å være årsaken til den høye Gini-koeffisienten for FR1?
+
+Det er to soner i NUTS3 som har mer enn dobbel så høy GDP per capita som de resterende. Dette gjør Gini-koeffisienten høy.
+
+### Oppgave 36
+
+```{r}
+NUTS2_diff <- eu_data_nested |> 
+  unnest(NUTS2_data) |> 
+  mutate(
+    # Når vi tar diff får vi en obs. mindre. Legger derfor inn en NA først
+    # i vektoren
+    diff_gdp_per_capita = c(NA, diff(gdp_per_capita)),
+    diff_gini_nuts2 = c(NA, diff(gini_nuts2))
+    ) |> 
+  select(country_name, country, NUTS2, year, diff_gdp_per_capita, diff_gini_nuts2) %>% 
+  # Fjerner obs. der vi har NA
+  filter(complete.cases(.)) |> 
+  group_by(country_name, country, NUTS2) |> 
+  nest(.key = "NUTS2_diff")
+```
+
+### Oppgave 37
