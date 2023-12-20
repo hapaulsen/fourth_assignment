@@ -584,3 +584,16 @@ eu_data_nested |>
 ```
 
 ### Oppgave 24
+
+```{r}
+eu_data_nested |> 
+  unnest(NUTS2_data) |> 
+  filter(str_detect(NUTS2, 'IE')) |> 
+  select(country_name, year, NUTS2, gini_nuts2) |> 
+  arrange(desc(year)) |> 
+  flextable() |> 
+  width(1, width = 1.5) |> 
+  width(2, width = 1.5)
+```
+
+### Oppgave 25
