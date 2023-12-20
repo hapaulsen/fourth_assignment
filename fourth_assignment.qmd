@@ -761,3 +761,76 @@ NUTS2_diff <- eu_data_nested |>
 ```
 
 ### Oppgave 37
+
+```{r}
+variabel_model <- function(a_df) {
+  # same simple model for each country
+  lm(diff_gini_nuts2 ~ diff_gdp_per_capita, data = a_df)
+}
+```
+
+```{r}
+NUTS2_diff <- NUTS2_diff %>% 
+  # remember map(data, function), our data named data
+  mutate(model = map(NUTS2_diff, .f = variabel_model))
+```
+
+### Oppgave 38
+
+Hent ut koeffisientene fra de 173 modellene og legg resultatet i
+variabelen mod_coeff. Gjør dette ved å «mappe» funksjonen coeff() på
+list_column modell. (Hint: Husk at hvis vi ønsker en dataframe så må `_df` varianten av map.)
+
+```{r}
+NUTS2_diff <- NUTS2_diff  |> 
+  group_by(country_name, country, NUTS2) |> 
+  mutate(
+    mod_coeff = map_df(
+      .x = model,
+      .f = coef
+      )
+    )
+```
+
+### Oppgave 39
+
+```{r}
+NUTS2_diff <- NUTS2_diff  |> 
+  group_by(country_name, country, NUTS2) |> 
+  mutate(
+    mod_sum = map_df(
+      .x = model,
+      .f = glance
+      )
+    )
+```
+
+### Oppgave 40
+
+```{r}
+NUTS2_diff$mod_coeff |> 
+  ggplot() +
+  geom_density(mapping = aes(x = diff_gdp_per_capita), adjust = 0.6) +
+  geom_vline(mapping = aes(xintercept = mean(diff_gdp_per_capita, na.rm = TRUE)), 
+                           colour = "gray60",
+                           linetype = "dashed")
+```
+
+### Oppgave 41
+
+Hvor mange av de 173 regrersjonskoeffisientene for `diff_gdp_per_capita` er positive?
+
+```{r}
+NUTS2_diff |>
+  sum(
+    if_else(diff_gdp_capita > 0)
+  )
+```
+
+### Oppgave 42 
+
+Finn mean av de 173 koeffisientene beregnet for `diff_gdp_per_capita`.
+
+### Oppgave 43
+
+Utfør en enkel t-test for å teste om diff_gdp_per_capita er signifikant størr enn 0.
