@@ -821,16 +821,54 @@ NUTS2_diff$mod_coeff |>
 Hvor mange av de 173 regrersjonskoeffisientene for `diff_gdp_per_capita` er positive?
 
 ```{r}
-NUTS2_diff |>
-  sum(
-    if_else(diff_gdp_capita > 0)
-  )
+sum(
+NUTS2_diff$mod_coeff$diff_gdp_per_capita > 0)
 ```
 
 ### Oppgave 42 
 
 Finn mean av de 173 koeffisientene beregnet for `diff_gdp_per_capita`.
 
+```{r}
+mean(
+NUTS2_diff$mod_coeff$diff_gdp_per_capita)
+```
+
 ### Oppgave 43
 
-Utfør en enkel t-test for å teste om diff_gdp_per_capita er signifikant størr enn 0.
+Utfør en enkel t-test for å teste om diff_gdp_per_capita er signifikant større enn 0.
+
+```{r}
+t.test(NUTS2_diff$mod_coeff$diff_gdp_per_capita, mu = 0)
+```
+
+T-test viser at diff_gdp_per_capita er signifikant større enn 0.
+
+### Oppgave 44
+
+Bruk funksjonen `plm()` fra pakken `plm` til å utføre en panel-regresjon på dataene. For argumentet index kan dere bruke `index = c("NUTS2", "year")`. Bruk samme enkle modell som ovenfor dvs. `diff_gini_nuts2 ~ diff_gdp_per_capita`. Putt resultatet av regresjonen i et objekt `p_mod`.
+
+```{r}
+p_mod <- NUTS2_diff |> 
+  unnest(NUTS2_diff) |> 
+plm(
+  function(a_df) {
+  # same simple model for each country
+  lm(diff_gini_nuts2 ~ diff_gdp_per_capita, data = a_df)},
+  NUTS2_diff,
+  map(NUTS2_diff, .f = variabel_model),
+  index = c("NUTS2", "year")
+)
+```
+
+```{r}
+p_mod <- NUTS2_diff |> 
+  unnest(NUTS2_diff) |> 
+  plm(
+  lm(diff_gini_nuts2 ~ diff_gdp_per_capita),
+  NUTS2_diff,
+  map(NUTS2_diff, .f = variabel_model),
+  index = c("NUTS2", "year")
+)
+
+```
