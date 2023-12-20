@@ -408,9 +408,7 @@ eu_data <- eu_data |>
 
 ### Oppgave 16
 
-Bruk koden nedenfor til å beregne Gini-koeffisienter på NUTS2 nivå. Beregn også `populasjonen` og `gdp` på NUTS2 nivå. Bruk de to siste for å regne ut `gdp_per_capita` for hvert NUTS2 område. Finn også antall NUTS3 regioner som finnes i hver NUTS2 region. Gi denne variabelen navnet `num_nuts3`.
-Det er viktig at dere beregner Gini-koeffisient før dere aggregerer
-populasjon og GDP. Resultatet legger dere i en tibble kalt `gini_NUTS2`.
+Bruk koden nedenfor til å beregne Gini-koeffisienter på NUTS2 nivå. Beregn også `populasjonen` og `gdp` på NUTS2 nivå. Bruk de to siste for å regne ut `gdp_per_capita` for hvert NUTS2 område. Finn også antall NUTS3 regioner som finnes i hver NUTS2 region. Gi denne variabelen navnet `num_nuts3`. Det er viktig at dere beregner Gini-koeffisient før dere aggregerer populasjon og GDP. Resultatet legger dere i en tibble kalt `gini_NUTS2`.
 
 ```{r}
 gini_NUTS2 <- eu_data |> 
