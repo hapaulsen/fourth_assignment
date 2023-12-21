@@ -848,6 +848,23 @@ T-test viser at diff_gdp_per_capita er signifikant større enn 0.
 
 Bruk funksjonen `plm()` fra pakken `plm` til å utføre en panel-regresjon på dataene. For argumentet index kan dere bruke `index = c("NUTS2", "year")`. Bruk samme enkle modell som ovenfor dvs. `diff_gini_nuts2 ~ diff_gdp_per_capita`. Putt resultatet av regresjonen i et objekt `p_mod`.
 
+Her forsøker vi å unneste NUTS2_diff for at plm() skal finne year.
+
+```{r}
+NUTS2_diff_unnest <- NUTS2_diff |>
+  unnest(NUTS2_diff)
+  
+```
+
+Her forsøker vi å bruke plm(), men får feilmelding ang. "not subsettable".
+
+```{r}
+p_mod <- NUTS2_diff_unnest |> 
+  plm(diff_gini_nuts2 ~ diff_gdp_per_capita, data = NUTS2_diff_unnest, index = c("NUTS2", "year"))
+```
+
+Her har vi forsøkt andre metoder, men til ingen hell.
+
 ```{r}
 p_mod <- NUTS2_diff |> 
   unnest(NUTS2_diff) |> 
