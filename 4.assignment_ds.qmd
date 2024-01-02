@@ -852,17 +852,7 @@ T-test viser at diff_gdp_per_capita er signifikant større enn 0.
 
 ### Oppgave 44
 
-Bruk funksjonen `plm()` fra pakken `plm` til å utføre en panel-regresjon på dataene. For argumentet index kan dere bruke `index = c("NUTS2", "year")`. Bruk samme enkle modell som ovenfor dvs. `diff_gini_nuts2 ~ diff_gdp_per_capita`. Putt resultatet av regresjonen i et objekt `p_mod`.
-
-Her forsøker vi å unneste NUTS2_diff for at plm() skal finne year.
-
-```{r}
-NUTS2_diff_unnest <- NUTS2_diff |>
-  #select(NUTS2, NUTS2_diff) |> 
-  unnest(NUTS2_diff)
-```
-
-Her forsøker vi å bruke plm(), men får feilmelding ang. "not subsettable".
+Bruk funksjonen `plm()` fra pakken `plm` til å utføre en panel-regresjon på dataene. For argumentet index kan dere bruke `index = c("NUTS2", "year")`. Bruk samme enkle modell som ovenfor dvs. `diff_gini_nuts2 ~ diff_gdp_per_capita`. Legg resultatet av regresjonen i et objekt `p_mod`.
 
 ```{r}
 p_mod <- NUTS2_diff |>
@@ -874,14 +864,6 @@ p_mod <- NUTS2_diff |>
     data = ., 
     index = c("NUTS2", "year")
     )
-```
-
-```{r}
-#| paged.print: false
-# uten select
-NUTS2_diff |>
-  unnest(NUTS2_diff) |> 
-  head(n = 10)
 ```
 
 ```{r}
@@ -917,6 +899,14 @@ Vis `summary()` for `p_mod` og tolk resultatet.
 summary(p_mod)
 ```
 
+#### Tolkning: 
+
+-   T-, og P-verdi: med en t-verdi på 23.027 og p-verdi på 2.2.e-16 er modellen er statistisk signifikant.
+
+-   F-testen viser 530.243 med p-verdi på 2.2.e-16 viser at det er sammenheng mellom uavhengige og avhengige variabler.
+
+##### 
+
 ### Oppgave 46
 
 En alternativ måte å finne `summary()` for p_mod er gjengitt i chunk-en nedenfor. Forklar hva som blir gjort her og sammenlign med resultatet av en ordinær `summary()`.
@@ -925,33 +915,6 @@ En alternativ måte å finne `summary()` for p_mod er gjengitt i chunk-en nedenf
 summary(p_mod, vcov = function(x) vcovHC(x, method = "white2"))
 ```
 
-*Her har vi forsøkt andre metoder, men til ingen hell. Gode forsøk, men det var altså plm() som ble forvirret av list-columns. Jeg kom på sporet siden plm() klaget om noe lm (som jo lå i variabelen model (en list-column) som den ikke forsto.)*
+#### Hva som blir gjort og sammenlign
 
-```{r}
-#| eval: false
-p_mod <- NUTS2_diff |> 
-  unnest(NUTS2_diff) |> 
-plm(
-  function(a_df) {
-  # same simple model for each country
-  lm(diff_gini_nuts2 ~ diff_gdp_per_capita, data = a_df)},
-  NUTS2_diff,
-  map(NUTS2_diff, .f = variabel_model),
-  index = c("NUTS2", "year")
-)
-```
-
-```{r}
-#| eval: false
-p_mod <- NUTS2_diff |> 
-  unnest(NUTS2_diff) |> 
-  plm(
-  lm(diff_gini_nuts2 ~ diff_gdp_per_capita),
-  NUTS2_diff,
-  map(NUTS2_diff, .f = variabel_model),
-  index = c("NUTS2", "year")
-)
-
-```
-
-## 
+Denne modellen undersøker også for heteroskedastisitet. Her ser vi på fordeling av residualer i datasettet. Denne modellen kommer frem til samme resultat som den forrige, men med noe høyere standardavvik og lavere F-test, men testen er likevel signifikant.
